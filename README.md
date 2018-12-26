@@ -33,3 +33,20 @@ The Payment is no different from other TX.
 The Encrypted E-Commodity can be decrypted with decent wallet.(Electrion Cash->Tools->Encrypt/Decrypt)
 
 ECIES lib: [js](https://github.com/monkeylord/electrum-ecies)
+
+### Featrues
+Anoymous Buy/Sell
+Anoymous routing though nodes
+Native Payments
+No Server needed(you can handle TX in any device anywhere)
+
+### Applications
+Can be used to sell any digital context.
+
+Software Activation Key Distribution.
+
+Encrypted File Selling.
+
+Signatures.
+
+Or simple secret.
