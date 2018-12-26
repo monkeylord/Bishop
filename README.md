@@ -43,10 +43,10 @@ No Server needed(you can handle TX in any device anywhere)
 ### Applications
 Can be used to sell any digital context.
 
-Software Activation Key Distribution.
+- Software Activation Key Distribution.
 
-Encrypted File Selling.
+- Encrypted File Selling.
 
-Signatures.
+- Signatures.
 
-Or simple secret.
+- Or simple secret.
