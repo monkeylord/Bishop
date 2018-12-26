@@ -35,10 +35,10 @@ The Encrypted E-Commodity can be decrypted with decent wallet.(Electrion Cash->T
 ECIES lib: [js](https://github.com/monkeylord/electrum-ecies)  [Go](https://github.com/gitzhou/bitcoin-ecies)
 
 ### Featrues
-Anoymous Buy/Sell
-Anoymous routing though nodes
-Native Payments
-No Server needed(you can handle TX in any device anywhere)
+- Anoymous Buy/Sell
+- Anoymous routing though nodes
+- Native Payments
+- No Server needed(you can handle TX in any device anywhere)
 
 ### Applications
 Can be used to sell any digital context.
