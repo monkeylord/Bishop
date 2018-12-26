@@ -20,9 +20,9 @@ Easy
 sequenceDiagram
 participant Buyer
 participant Seller
-participant E-Commodity
+participant E_Commodity
 Buyer->>Seller: P2PkH with OP_RETRUN Message
-Seller-->E-Commodity: Fetch E-Commodity
+Seller-->E_Commodity: Fetch E-Commodity
 Seller->>Buyer: E-Commodity Encrypted in Buyer's Public Key(ECIES)
 note left of Buyer: Decrypt and Get E-Commodity
 Seller-->>Buyer: Refund if something goes wrong
