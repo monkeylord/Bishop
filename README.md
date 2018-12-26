@@ -32,7 +32,7 @@ The Payment is no different from other TX.
 
 The Encrypted E-Commodity can be decrypted with decent wallet.(Electrion Cash->Tools->Encrypt/Decrypt)
 
-ECIES lib: [js](https://github.com/monkeylord/electrum-ecies)
+ECIES lib: [js](https://github.com/monkeylord/electrum-ecies)  [Go](https://github.com/gitzhou/bitcoin-ecies)
 
 ### Featrues
 Anoymous Buy/Sell
