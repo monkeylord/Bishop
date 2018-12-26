@@ -29,5 +29,7 @@ Seller-->>Buyer: Refund if something goes wrong
 ~~~
 
 The Payment is no different from other TX.
+
 The Encrypted E-Commodity can be decrypted with decent wallet.(Electrion Cash->Tools->Encrypt/Decrypt)
+
 ECIES lib: [js](https://github.com/monkeylord/electrum-ecies)
