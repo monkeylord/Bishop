@@ -3,20 +3,45 @@ This project is to build shops on Bitcoin.
 
 Bitcoin(SV) metanet transfers both data and money on TX, which can natively host shops.
 
-Shop host on bitcoin will be
+### Featrues
 
-Serverless
-Anonymous
-Worldwide
-Easy
+Shop host on bitcoin will have
 
-## Develop Plan
-1. A Simple Shop Demo.
-2. E-commercial protocol.
-3. A Full Shop implement.
+- Anoymous Buy/Sell
+- Anoymous routing though nodes
+- Native Payments
+- No Server needed(you can handle TX in any device anywhere)
+- Worldwide Aviliable
+- Easily Deploy
+
+### Applications
+
+Can be used to sell any digital context.
+
+- Software Activation Key Distribution.
+
+  If you are a independent software developer, it saves you from maintaining payment channels in different countries.
+
+- Encrypted File Selling.
+
+  Films, documents, tools, etc. Upload encrypted files publicly and sell decrypt keys.
+
+- Signatures.
+
+- Or simple secret.
+
+  Anything like thanks letter.
+
+### Develop Plan
+- [X] A Simple Shop Demo. [See This](https://github.com/monkeylord/Bishop/tree/master/Examples)
+- [ ] E-commercial protocol.
+- [ ] A Full Shop implement.
 
 ## Simple Shop Logic
-~~~mermaid
+
+![SimpleShopLogic](SimpleShopLogic.png)
+
+```mermaid
 sequenceDiagram
 participant Buyer
 participant Seller
@@ -26,7 +51,7 @@ Seller-->E_Commodity: Fetch E-Commodity
 Seller->>Buyer: E-Commodity Encrypted in Buyer's Public Key(ECIES)
 note left of Buyer: Decrypt and Get E-Commodity
 Seller-->>Buyer: Refund if something goes wrong
-~~~
+```
 
 The Payment is no different from other TX.
 
@@ -34,19 +59,5 @@ The Encrypted E-Commodity can be decrypted with decent wallet.(Electrion Cash->T
 
 ECIES lib: [js](https://github.com/monkeylord/electrum-ecies)  [Go](https://github.com/gitzhou/bitcoin-ecies)
 
-### Featrues
-- Anoymous Buy/Sell
-- Anoymous routing though nodes
-- Native Payments
-- No Server needed(you can handle TX in any device anywhere)
 
-### Applications
-Can be used to sell any digital context.
 
-- Software Activation Key Distribution.
-
-- Encrypted File Selling.
-
-- Signatures.
-
-- Or simple secret.
