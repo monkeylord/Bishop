@@ -57,3 +57,12 @@ console.log(SignedTX)
 
 ~~~
 
+
+
+The Buyer will receive TX like this
+
+![SimpleShop1](SimpleShop1.png)
+
+Buyer can decrypt Encrypted Commodity with Tools->Encrypt/decrypt Message
+
+![SimpleShop1](SimpleShop2.png)
