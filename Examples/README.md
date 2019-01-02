@@ -6,7 +6,7 @@ A simple shop that retrieve PK from Payment and deliver Digital Commdity in ECIE
 
 The shop code can be ran on any device accessed to bitcoin network, which means you do not need a IP address.
 
-TX is routed anonymous.
+TX is routed anonymously.
 
 Commodity can only be retrieved by the Buyer
 
