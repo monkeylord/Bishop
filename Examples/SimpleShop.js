@@ -62,7 +62,7 @@ var buildDeliverTX = function (tx,buyerPK,commodity){
     }
     var deliverTX = new Transaction()
                         .from(utxo).addData(ECIES.encrypt(commodity,buyerPK))
-                        .to(new PublicKey(buyerPK).toAddress(),1)
+                        .to(new PublicKey(buyerPK).toAddress(),546)//dust limit
                         .change(shopConfig.StorageAddress)
                         .feePerKb(1024)
     return deliverTX
