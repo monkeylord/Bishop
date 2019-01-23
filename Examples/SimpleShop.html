@@ -173,11 +173,11 @@ var txs=[];
 var replies={};
 isVaild = function(tx){
     console.log("This is the paymentTX:"+JSON.stringify(tx));
-    return confirm("Payment Validation\r\nIs payment OK?(OK to Deliver,Cancel to Refund)");
+    return confirm("Payment Validation 付款正确性确认\r\nIs payment OK?(OK to Deliver,Cancel to Refund) 付款是否正确？（确定则进入发货流程，取消则进入退款流程）");
 }
 getCommodity = function(msg){
     console.log("This is Order in payment:"+msg);
-    return prompt("Delivering Commodity\r\nOrder in payment OP_RETURN:"+msg+"\r\nWhat would you like to send back in deliverTX?:");
+    return prompt("Delivering Commodity 发货\r\nOrder in payment OP_RETURN 订单的内容是:"+msg+"\r\nWhat would you like to send back in deliverTX? 你要发货的内容是:");
 }
 
 window.onload=function(){
@@ -217,11 +217,11 @@ var displayPayment=function(tx){
     div.append("TXID: "+tx.txid)
     div.append(document.createElement("br"))
     if(tx.utxos.length>0){
-        div.append("Unhandled");
+        div.append("Unhandled 未处理");
         div.append(document.createElement("br"));
-        div.append("Order: "+getMsg(tx.rawtx));
+        div.append("Order 订单: "+getMsg(tx.rawtx));
         div.append(document.createElement("br"));
-        div.append("Satoshis: "+tx.utxos[0].satoshis);
+        div.append("Satoshis 金额: "+tx.utxos[0].satoshis);
         div.append(document.createElement("br"));
         var reply=document.createElement("p");
         reply.id="r_"+tx.rawtx;
@@ -273,25 +273,50 @@ var displayPayment=function(tx){
 </head>
 <body>
 	<h1>Simple Shop</h1>
-	<p>
-    A Simple Bitcoin Shop Demo.
-    <br>All payments are handled locally, this shop only communicate with endpoint. 
+    <h4>A Simple Bitcoin Shop Demo.
+    <br>比特币实现的简单电子商店
+    <br>All payments are handled locally, this shop only communicate with endpoint. You can save the HTML page and use it on disk.
+    <br>所有的支付都在本地处理，商店对外仅访问区块链接入点。你可以将这个HTML文件保存在本地使用。
     <br>Delivery is in OP_RETURN and encrypted with ECIES, which can be decrypted and only decrypted with buyer's PrivateKey.
+    <br>发货是通过OP_RETURN进行的，发货的内容经过了ECIES加密，仅收货者能够通过其私钥解密。
     <br>(ElectrumSV: Address -right click-> Encrypt/decrypt messages)
-    </p>
+    <br>在ElectrumSV钱包（或EC）里，地址上右键，加解密。
+    </h4>
+    <details>
+    <summary>Usage 使用说明</summary>
+    <h5>Github: https://github.com/monkeylord/Bishop
+    
+    <br>Key Selling Example<br>
+    <br>以卖Key为例
+    <br>1. Set your shop address and cold wallet address.
+    <br>填写商店地址（Shop Address）和冷钱包地址（Cold Wallet Address）
+    <br>2. Buyer paid to your shop address (P2PKH).
+    <br>让卖家付款到商店地址
+    <br>3. Load payments and handle it.
+    <br>点击Load Payment来读取付款信息，并点handle来处理它。
+    <br>4. Valid payment and put Key in prompt window.
+    <br>确认付款正确后，在弹出窗口中填入要发货的KEY
+    <br>(the Key will be encrypted with PublicKey contained in first P2PKH input in payment TX)
+    <br>(KEY会被付款TX中第一个输入中提供的公钥加密)
+    <br>5. Sign and Broadcast the Reply/Delivery TX.
+    <br>用商店地址的私钥签名TX并广播
+    <br>6. Buyer can decrypt OP_RETURN message in Delivery TX with his PrivateKey and get his Key.
+    <br>买家会收到这个TX，并且可以用他的私钥解密这个OP_RETURN，从而提取出Key
+    </h5>
+    </details>
     <details id="config">
-    <summary>Shop Config</summary>
-	Endpoint:<br>
+    <summary>Shop Config 商店设置</summary>
+	<h4>Endpoint:</h4> <br>区块链接入点<br>
 	<input id="endpoint" type="text" value="https://bchsvexplorer.com/api"><br>
-    Shop Address:<br>
+    <h4>Shop Address</h4>(Bitcoin Address to receive payments): <br>商店地址（用于接受付款的比特币地址）<br>
     <input id="shopaddr" type="text" value=""><br>
-    Cold Wallet Address(Will transfer payment into, when delivered.):<br>
+    <h4>Cold Wallet Address</h4>(Bitcoin Address that store you coins. Delivery will transfer payment to this address.): <br>冷钱包地址（用于存币的比特币地址，已发货的付款会被转到这个地址。）<br>
     <input id="storageaddr" type="text" value=""><br>
-    Shop PrivateKey(Keep it empty, if you want to sign reply TX mannually.):<br>
+    <h4>Shop PrivateKey</h4>(Shop Address's PrivateKey. Keep it empty, if you want to sign reply TX mannually.): <br>商店私钥（如果你不希望每次手动签名，可以填进去）<br>
     <input id="privkey" type="text" value=""><br>
     </details>
-	<input type="button" value="Load/Refresh Payments" onclick="loadPayments()">
-    <h2>Payments:</h2>
+	<input type="button" value="Load/Refresh Payments 加载/刷新付款" onclick="loadPayments()">
+    <h2>Payments: 收到的付款</h2>
     <div id="payments"></div>
 </body>
 </html>
