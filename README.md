@@ -33,7 +33,7 @@ Can be used to sell any digital context.
   Anything like thanks letter.
 
 ### Develop Plan
-- [X] A Simple Shop Demo. [See This](https://github.com/monkeylord/Bishop/tree/master/Examples)
+- [X] A Simple Shop Demo. [Nodejs Demo](https://github.com/monkeylord/Bishop/tree/master/Examples) , [HTML Demo](https://monkeylord.github.io/bitcoin/demo/SimpleShop.html)
 - [ ] E-commercial protocol.
 - [ ] A Full Shop implement.
 
