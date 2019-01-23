@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Bishop Demo</title>
+<script src='https://unpkg.com/bsv@0.21.1/bsv.min.js'></script>
+<script src='https://unpkg.com/electrum-ecies'></script>
+<script type="text/javascript">
+//Shop Code
+var ECIES=ecies;
+var PublicKey = bsv.PublicKey;
+var Transaction=bsv.Transaction;
+var Address=bsv.Address;
+var shopConfig=null;
+var isVaild=function(tx){return true};
+var getCommodity=null;
+
+var getPublicKeyInPublicKeyHashIn=function(input){
+    if(input.script.isPublicKeyHashIn()==false)throw new Error("Not PublicKeyHashIn")
+    var script=input.script.toBuffer();
+    var pubkey=script.subarray(script.length-33,script.length);
+    return pubkey;
+}
+
+var getMsg=function(tx){
+    var outputs=Transaction(tx).outputs;
+    for (var i = 0; i < outputs.length; i++) {  
+        if(outputs[i].script.isDataOut())return outputs[i].script.toBuffer().subarray(2).toText();
+    }
+    return "";
+}
+
+var getFirstPayment=function(tx,address){
+    var outputs=Transaction(tx).outputs;
+    for (var i = 0; i < outputs.length; i++) {  
+        if(outputs[i].script.toAddress().toString()==new Address(address).toString())return i;
+    }
+    return null;
+}
+
+var getFirstPKHInput=function(tx){
+    var inputs=Transaction(tx).inputs;
+    for (var i = 0; i < inputs.length; i) {  
+        if(inputs[i].script.isPublicKeyHashIn())return inputs[i];
+    }
+    return null;
+}
+
+var buildRefundTX = function (tx,buyerPK){
+    var paymentIndex = getFirstPayment(tx,shopConfig.ShopAddress)
+    var utxo = {
+        "txId" : tx.hash,
+        "outputIndex" : paymentIndex,
+        "address" : shopConfig.ShopAddress,
+        "script" : tx.outputs[paymentIndex].script,
+        "satoshis" : tx.outputs[paymentIndex].satoshis
+    }
+    var refundTX = new Transaction()
+                    .from(utxo).addData(ECIES.encrypt('Refund',buyerPK))
+                    .change(new PublicKey(buyerPK).toAddress())
+                    .feePerKb(1024)
+    return refundTX
+}
+
+var buildDeliverTX = function (tx,buyerPK,commodity){
+    var paymentIndex = getFirstPayment(tx,shopConfig.ShopAddress)
+    var utxo = {
+        "txId" : tx.hash,
+        "outputIndex" : paymentIndex,
+        "address" : shopConfig.ShopAddress,
+        "script" : tx.outputs[paymentIndex].script,
+        "satoshis" : tx.outputs[paymentIndex].satoshis
+    }
+    var deliverTX = new Transaction()
+                        .from(utxo).addData(ECIES.encrypt(commodity,buyerPK))
+                        .to(new PublicKey(buyerPK).toAddress(),546)//dust limit
+                        .change(shopConfig.StorageAddress)
+                        .feePerKb(1024)
+    return deliverTX
+}
+
+var handlePayment = function(rawtx){
+    var tx=new Transaction(rawtx);
+    if(shopConfig==null)throw new Error("shop config first");
+    //Get Buyer PublicKey from Payment TX Input
+    var firstPKH=getFirstPKHInput(tx)
+    var buyerPK=getPublicKeyInPublicKeyHashIn(firstPKH)
+    if(isVaild(tx)){
+        //Get OP_RETURN content
+        var msg=getMsg(tx)
+        //Get Commodity according to msg
+        var commodity=getCommodity(msg)
+        //Build DeliverTX
+        return buildDeliverTX(tx,buyerPK,commodity)
+    }else{
+        return buildRefundTX(tx,buyerPK)
+    }
+}
+
+var config = function(config,commodityProvider,validator){
+    shopConfig=config;
+    getCommodity=commodityProvider;
+    isVaild=validator;
+}
+
+Uint8Array.prototype.toText=function (){
+  var dataString = "";
+  for (var i = 0; i < this.length; i++) {
+    dataString += String.fromCharCode(this[i]);
+  }
+  return dataString
+}
+</script>
+<script type="text/javascript">
+//P2P
+async function getAddr(addr){
+    var url=endpoint+'/addr/'+addr;
+    return fetch(url).then(function(r){
+        return r.json();
+    });
+}
+
+var getTX=async function(addrinfo){
+    var txs=[];
+    for(var i=0;i<addrinfo.transactions.length;i++){
+        var url=endpoint+'/tx/'+addrinfo.transactions[i];
+        var tx=await fetch(url).then(function(r){
+            return r.json();
+        });
+        tx.utxos=getUTXO(tx,addrinfo.addrStr);
+        txs[i]=tx;
+    }
+    return txs;
+}
+
+var getUTXO=function(tx,addr){
+    var utxos=[];
+    for(var i=0;i<tx.vout.length;i++){
+        if(tx.vout[i].scriptPubKey.type=='pubkeyhash'&&tx.vout[i].scriptPubKey.addresses[0]==addr&&tx.vout[i].spentTxId==null){
+            var utxo={
+                "txId":tx.txid,
+                "outputIndex":i,
+                "address":addr,
+                "script":tx.vout[i].scriptPubKey.hex,
+                "satoshis":tx.vout[i].valueSat,
+                "rawtx":tx.rawtx
+            }
+            utxos.push(utxo);
+        }
+    }
+    return utxos;
+}
+var broadcastTX=function(rawtx){
+    var url=endpoint+"/tx/send"
+    return fetch(url,{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({"rawtx":rawtx})
+    }).then(function(r){
+        if(r.ok)return r.text();
+        else throw r.text();
+    }).catch(async function(err){
+        var result=await err;
+        alert(result);
+    });
+}
+</script>
+<script type="text/javascript">
+var endpoint="https://bchsvexplorer.com/api";
+var txs=[];
+var replies={};
+isVaild = function(tx){
+    console.log("This is the paymentTX:"+JSON.stringify(tx));
+    return confirm("Payment Validation\r\nIs payment OK?(OK to Deliver,Cancel to Refund)");
+}
+getCommodity = function(msg){
+    console.log("This is Order in payment:"+msg);
+    return prompt("Delivering Commodity\r\nOrder in payment OP_RETURN:"+msg+"\r\nWhat would you like to send back in deliverTX?:");
+}
+
+window.onload=function(){
+    console.log("Loading Shop Config");
+    shopConfig=JSON.parse(localStorage.getItem("shopConfig"));
+    if(shopConfig!=null){
+        document.getElementById("endpoint").value=shopConfig.Endpoint;
+        document.getElementById("shopaddr").value=shopConfig.ShopAddress;
+        document.getElementById("storageaddr").value=shopConfig.StorageAddress;
+        document.getElementById("privkey").value=shopConfig.ShopPrivateKey;
+    }else{
+        document.getElementById("config").open=true;
+    }
+}
+
+
+var loadPayments = async function(){
+    endpoint=document.getElementById("endpoint").value;
+    shopConfig={};
+    shopConfig.Endpoint=document.getElementById("endpoint").value;
+    shopConfig.ShopAddress=document.getElementById("shopaddr").value;
+    shopConfig.StorageAddress=document.getElementById("storageaddr").value;
+    shopConfig.ShopPrivateKey=document.getElementById("privkey").value;
+    shopConfig.FeePerKb=1024;
+    localStorage.setItem("shopConfig",JSON.stringify(shopConfig));
+    document.getElementById("payments").innerHTML="Loading Payments"
+    txs=await getAddr(shopConfig.ShopAddress).then(getTX);
+    document.getElementById("payments").innerHTML=""
+    txs.forEach(displayPayment);
+}
+
+var displayPayment=function(tx){
+    var payments=document.getElementById("payments");
+    var div=document.createElement("div")
+    div.id=tx.txid;
+    div.style='border:1px dotted #000000';
+    div.append("TXID: "+tx.txid)
+    div.append(document.createElement("br"))
+    if(tx.utxos.length>0){
+        div.append("Unhandled");
+        div.append(document.createElement("br"));
+        div.append("Order: "+getMsg(tx.rawtx));
+        div.append(document.createElement("br"));
+        div.append("Satoshis: "+tx.utxos[0].satoshis);
+        div.append(document.createElement("br"));
+        var reply=document.createElement("p");
+        reply.id="r_"+tx.rawtx;
+        reply.style="word-break: break-word;";
+        div.append(reply);
+        var input=document.createElement("input");
+        input.type="button";
+        input.value="handle";
+        input.id=tx.rawtx;
+        input.onclick=function(evt){
+            if(evt.srcElement.value=="handle"){
+                console.log("Handling Payment "+evt.srcElement.id);
+                var txreply=handlePayment(evt.srcElement.id);
+                if(bsv.PrivateKey.isValid(shopConfig.ShopPrivateKey)){
+                    txreply=txreply.sign(new bsv.PrivateKey(shopConfig.ShopPrivateKey));
+                };
+                replies[evt.srcElement.id]=txreply;
+                if(txreply.inputs[0].script.isPublicKeyHashIn()){
+                    evt.srcElement.value="broadcast";
+                }else{
+                    evt.srcElement.value="sign";
+                }
+                console.log(txreply);
+            }else if(evt.srcElement.value=="sign"){
+                var privkey=prompt("PrivateKey to Sign This Transaction:",shopConfig.PrivateKey);
+                if(privkey!=null)replies[evt.srcElement.id]=replies[evt.srcElement.id].sign(privkey);
+                if(replies[evt.srcElement.id].inputs[0].script.isPublicKeyHashIn()){
+                    evt.srcElement.value="broadcast";
+                }else{
+                    console.log("Wrong PrivateKey");
+                    evt.srcElement.value="sign";
+                }
+            }else if(evt.srcElement.value=="broadcast"){
+                var tx_bc=prompt("Broadcast this Transaction?",replies[evt.srcElement.id]);
+                if(tx_bc!=null)broadcastTX(tx_bc).then(function(result){
+                    if(JSON.parse(result).txid!=undefined){
+                        alert("Broadcasted. "+JSON.parse(result).txid);
+                    }else 
+                        alert(result);
+                });
+            }
+            document.getElementById("r_"+evt.srcElement.id).innerText="Reply TX: "+replies[evt.srcElement.id].toString();
+        }
+        div.appendChild(input);
+    }
+    payments.appendChild(div);
+}
+</script>
+</head>
+<body>
+	<h1>Simple Shop</h1>
+	<p>
+    A Simple Bitcoin Shop Demo.
+    <br>All payments are handled locally, this shop only communicate with endpoint. 
+    <br>Delivery is in OP_RETURN and encrypted with ECIES, which can be decrypted and only decrypted with buyer's PrivateKey.
+    <br>(ElectrumSV: Address -right click-> Encrypt/decrypt messages)
+    </p>
+    <details id="config">
+    <summary>Shop Config</summary>
+	Endpoint:<br>
+	<input id="endpoint" type="text" value="https://bchsvexplorer.com/api"><br>
+    Shop Address:<br>
+    <input id="shopaddr" type="text" value=""><br>
+    Cold Wallet Address(Will transfer payment into, when delivered.):<br>
+    <input id="storageaddr" type="text" value=""><br>
+    Shop PrivateKey(Keep it empty, if you want to sign reply TX mannually.):<br>
+    <input id="privkey" type="text" value=""><br>
+    </details>
+	<input type="button" value="Load/Refresh Payments" onclick="loadPayments()">
+    <h2>Payments:</h2>
+    <div id="payments"></div>
+</body>
+</html>
